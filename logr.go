@@ -8,6 +8,7 @@ import (
 )
 
 const (
+	// SuffixTimeFormat is the default format used for the suffix date and time on each rotated log.
 	SuffixTimeFormat = "2006-01-02_1504"
 )
 
@@ -36,6 +37,10 @@ func NewWriter(filename string) (*RotatingWriter, error) {
 	return NewWriterFromFile(file)
 }
 
+// NewWriterFromFile creates a rotating writer using the provided file as base.
+//
+// The caller must take care to not close the file it provides here, as the RotatingWriter
+// will do it automatically when rotating.
 func NewWriterFromFile(file *os.File) (*RotatingWriter, error) {
 	w := &RotatingWriter{
 		filename: file.Name(),
