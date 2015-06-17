@@ -37,33 +37,6 @@ func checkEqual(t testing.TB, buf []byte, b byte) error {
 	return nil
 }
 
-func TestRotateSchedule(t *testing.T) {
-	f, err := ioutil.TempFile(os.TempDir(), "logr")
-	require.Nil(t, err)
-
-	rw, err := logr.NewWriterFromFile(f)
-	require.Nil(t, err)
-
-	now := time.Now()
-	{
-		n, err := rw.Write(makeBuf(0xFF))
-		require.Nil(t, err)
-		require.Equal(t, 1024, n)
-
-		rw.Schedule(now.Hour(), now.Minute())
-
-		n, err = rw.Write(makeBuf(0xFE))
-		require.Nil(t, err)
-		require.Equal(t, 1024, n)
-	}
-
-	newData := readFile(t, f.Name())
-	require.Nil(t, checkEqual(t, newData, 0xFE))
-
-	rotatedData := readFile(t, f.Name()+"."+now.Format(logr.SuffixTimeFormat))
-	require.Nil(t, checkEqual(t, rotatedData, 0xFF))
-}
-
 func TestRotateMaxSize(t *testing.T) {
 	f, err := ioutil.TempFile(os.TempDir(), "logr")
 	require.Nil(t, err)
