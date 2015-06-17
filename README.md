@@ -12,7 +12,7 @@ Usage
 Use it like this.
 
 ```go
-w := logr.NewWrite("/var/log/mylog.log")
+w := logr.NewWriter("/var/log/mylog.log")
 log.SetOutput(w)
 
 log.Println("foobar")
