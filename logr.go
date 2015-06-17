@@ -1,7 +1,6 @@
 package logr
 
 import (
-	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -14,17 +13,14 @@ const (
 
 // RotatingWriter is a io.Writer which wraps a *os.File, suitable for log rotation.
 type RotatingWriter struct {
-	lock     sync.Mutex
-	filename string
-	file     *os.File
-
-	schedule struct {
-		hour   int
-		minute int
-	}
-
+	lock        sync.Mutex
+	filename    string
+	file        *os.File
 	currentSize int64
-	maxSize     int64
+	startDate   time.Time
+
+	daily   bool
+	maxSize int64
 }
 
 // NewWriter creates a new file and returns a rotating writer.
@@ -43,13 +39,11 @@ func NewWriter(filename string) (*RotatingWriter, error) {
 // will do it automatically when rotating.
 func NewWriterFromFile(file *os.File) (*RotatingWriter, error) {
 	w := &RotatingWriter{
-		filename: file.Name(),
-		file:     file,
-		maxSize:  -1,
+		filename:  file.Name(),
+		file:      file,
+		maxSize:   -1,
+		startDate: time.Now(),
 	}
-
-	w.schedule.hour = -1
-	w.schedule.minute = -1
 
 	if err := w.readCurrentSize(); err != nil {
 		return nil, err
@@ -71,12 +65,11 @@ func (w *RotatingWriter) readCurrentSize() error {
 }
 
 // Schedule set the time at which to rotate, each day
-func (w *RotatingWriter) Schedule(hour, minute int) *RotatingWriter {
+func (w *RotatingWriter) Daily() *RotatingWriter {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 
-	w.schedule.hour = hour
-	w.schedule.minute = minute
+	w.daily = true
 
 	return w
 }
@@ -95,9 +88,9 @@ func (w *RotatingWriter) Write(b []byte) (int, error) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
 
-	if w.schedule.hour > -1 {
+	if w.daily {
 		now := time.Now()
-		if now.Hour() == w.schedule.hour {
+		if now.Day() != w.startDate.Day() {
 			if err := w.rotate(); err != nil {
 				return -1, err
 			}
@@ -125,16 +118,17 @@ func (w *RotatingWriter) rotate() error {
 	}
 
 	{
-		destName := w.filename + "." + time.Now().Format(SuffixTimeFormat)
+		destName := w.filename + "." + w.startDate.Format(SuffixTimeFormat)
 		_, err := os.Stat(destName)
 		if err != nil && !os.IsNotExist(err) {
-			fmt.Println(err.Error())
 			return err
 		}
 
 		if err := os.Rename(w.filename, destName); err != nil {
 			return err
 		}
+
+		w.startDate = time.Now()
 	}
 
 	{
