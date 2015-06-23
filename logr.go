@@ -2,6 +2,7 @@ package logr
 
 import (
 	"os"
+	"path/filepath"
 	"sync"
 	"time"
 )
@@ -19,8 +20,10 @@ type RotatingWriter struct {
 	currentSize int64
 	startDate   time.Time
 
-	daily   bool
-	maxSize int64
+	timeFormat string
+	prefix     bool
+	daily      bool
+	maxSize    int64
 }
 
 // NewWriter creates a new file and returns a rotating writer.
@@ -84,6 +87,26 @@ func (w *RotatingWriter) MaxSize(s int64) *RotatingWriter {
 	return w
 }
 
+// TimeFormat sets the time format to use when rolling over.
+func (w *RotatingWriter) TimeFormat(s string) *RotatingWriter {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
+	w.timeFormat = s
+
+	return w
+}
+
+// Prefix tells the writer to use the time format as prefix.
+func (w *RotatingWriter) Prefix() *RotatingWriter {
+	w.lock.Lock()
+	defer w.lock.Unlock()
+
+	w.prefix = true
+
+	return w
+}
+
 func (w *RotatingWriter) Write(b []byte) (int, error) {
 	w.lock.Lock()
 	defer w.lock.Unlock()
@@ -118,7 +141,7 @@ func (w *RotatingWriter) rotate() error {
 	}
 
 	{
-		destName := w.filename + "." + w.startDate.Format(SuffixTimeFormat)
+		destName := w.makeDestName()
 		_, err := os.Stat(destName)
 		if err != nil && !os.IsNotExist(err) {
 			return err
@@ -128,7 +151,7 @@ func (w *RotatingWriter) rotate() error {
 			return err
 		}
 
-		w.startDate = time.Now()
+		w.startDate = time.Now() // TODO(vincent): would like to truncate to midnight
 	}
 
 	{
@@ -142,4 +165,20 @@ func (w *RotatingWriter) rotate() error {
 	}
 
 	return nil
+}
+
+func (w *RotatingWriter) makeDestName() string {
+	tf := SuffixTimeFormat
+	if w.timeFormat != "" {
+		tf = w.timeFormat
+	}
+
+	if w.prefix {
+		ext := filepath.Ext(w.filename)
+		name := w.filename[:len(w.filename)-len(ext)]
+
+		return name + "." + w.startDate.Format(tf) + ext
+	} else {
+		return w.filename + "." + w.startDate.Format(tf)
+	}
 }
