@@ -18,12 +18,12 @@ func TestMakeDestName(t *testing.T) {
 	}
 	n := rw.makeDestName()
 
-	expected := fmt.Sprintf("/var/log/logr.log.%s", now.Format(SuffixTimeFormat))
+	expected := fmt.Sprintf("/var/log/logr.log.%s", now.Format(TimeFormat))
 	require.Equal(t, expected, n)
 
 	rw.prefix = true
 	n = rw.makeDestName()
 
-	expected = fmt.Sprintf("/var/log/logr.%s.log", now.Format(SuffixTimeFormat))
+	expected = fmt.Sprintf("/var/log/logr.%s.log", now.Format(TimeFormat))
 	require.Equal(t, expected, n)
 }

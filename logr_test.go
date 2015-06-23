@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -60,6 +61,64 @@ func TestRotateMaxSize(t *testing.T) {
 	newData := readFile(t, f.Name())
 	require.Nil(t, checkEqual(t, newData, 0xFE))
 
-	rotatedData := readFile(t, f.Name()+"."+now.Format(logr.SuffixTimeFormat))
+	rotatedData := readFile(t, f.Name()+"."+now.Format(logr.TimeFormat))
+	require.Nil(t, checkEqual(t, rotatedData, 0xFF))
+}
+
+func TestRotateMaxSizeCustomTimeFormat(t *testing.T) {
+	f, err := ioutil.TempFile(os.TempDir(), "logr")
+	require.Nil(t, err)
+
+	rw, err := logr.NewWriterFromFile(f)
+	require.Nil(t, err)
+	rw.TimeFormat("2006__01__02")
+
+	now := time.Now()
+	{
+		n, err := rw.Write(makeBuf(0xFF))
+		require.Nil(t, err)
+		require.Equal(t, 1024, n)
+
+		rw.MaxSize(512)
+
+		n, err = rw.Write(makeBuf(0xFE))
+		require.Nil(t, err)
+		require.Equal(t, 1024, n)
+	}
+
+	newData := readFile(t, f.Name())
+	require.Nil(t, checkEqual(t, newData, 0xFE))
+
+	rotatedData := readFile(t, f.Name()+"."+now.Format("2006__01__02"))
+	require.Nil(t, checkEqual(t, rotatedData, 0xFF))
+}
+
+func TestRotateMaxSizePrefix(t *testing.T) {
+	f, err := ioutil.TempFile(os.TempDir(), "logr")
+	require.Nil(t, err)
+
+	rw, err := logr.NewWriterFromFile(f)
+	require.Nil(t, err)
+	rw.Prefix()
+
+	now := time.Now()
+	{
+		n, err := rw.Write(makeBuf(0xFF))
+		require.Nil(t, err)
+		require.Equal(t, 1024, n)
+
+		rw.MaxSize(512)
+
+		n, err = rw.Write(makeBuf(0xFE))
+		require.Nil(t, err)
+		require.Equal(t, 1024, n)
+	}
+
+	newData := readFile(t, f.Name())
+	require.Nil(t, checkEqual(t, newData, 0xFE))
+
+	ext := filepath.Ext(f.Name())
+	name := f.Name()[:len(f.Name())-len(ext)]
+	rotatedData := readFile(t, name+"."+now.Format(logr.TimeFormat)+ext)
 	require.Nil(t, checkEqual(t, rotatedData, 0xFF))
 }

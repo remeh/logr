@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	// SuffixTimeFormat is the default format used for the suffix date and time on each rotated log.
-	SuffixTimeFormat = "2006-01-02_1504"
+	// TimeFormat is the default format used for the suffix date and time on each rotated log.
+	TimeFormat = "2006-01-02_1504"
 )
 
 // RotatingWriter is a io.Writer which wraps a *os.File, suitable for log rotation.
@@ -168,7 +168,7 @@ func (w *RotatingWriter) rotate() error {
 }
 
 func (w *RotatingWriter) makeDestName() string {
-	tf := SuffixTimeFormat
+	tf := TimeFormat
 	if w.timeFormat != "" {
 		tf = w.timeFormat
 	}
