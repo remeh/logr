@@ -67,7 +67,9 @@ func (w *RotatingWriter) readCurrentSize() error {
 	return nil
 }
 
-// Schedule set the time at which to rotate, each day
+// Daily set the rotating to be done each day.
+//
+// The rotating is done at (start date + 24h), not at precisely the next day.
 func (w *RotatingWriter) Daily() *RotatingWriter {
 	w.lock.Lock()
 	defer w.lock.Unlock()
