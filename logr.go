@@ -180,7 +180,7 @@ func (w *RotatingWriter) makeDestName() string {
 		name := w.filename[:len(w.filename)-len(ext)]
 
 		return name + "." + w.startDate.Format(tf) + ext
-	} else {
-		return w.filename + "." + w.startDate.Format(tf)
 	}
+
+	return w.filename + "." + w.startDate.Format(tf)
 }
