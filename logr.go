@@ -153,7 +153,7 @@ func (w *RotatingWriter) rotate() error {
 			return err
 		}
 
-		w.startDate = time.Now() // TODO(vincent): would like to truncate to midnight
+		w.startDate = time.Now().Truncate(time.Hour * 24)
 	}
 
 	{
