@@ -244,18 +244,9 @@ func (w *RotatingWriter) gzip(src *os.File) (*os.File, error) {
 	// compression
 	z := gzip.NewWriter(tmpFile)
 	defer z.Close()
-	tee := io.TeeReader(src, z)
-
-	buff := make([]byte, 64)
-	for {
-		n, err := tee.Read(buff)
-		if err != io.EOF && err != nil {
-			return nil, err
-		}
-
-		if err == io.EOF || n == 0 {
-			break
-		}
+	_, err = io.Copy(z, src)
+	if err != nil {
+		return nil, err
 	}
 
 	return tmpFile, nil
