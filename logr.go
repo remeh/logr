@@ -40,7 +40,7 @@ func NewWriter(filename string) (*RotatingWriter, error) {
 	return NewWriterFromFile(file)
 }
 
-// NewWriter creates a new file and returns a rotating writer compressing
+// NewWriterWithCompression creates a new file and returns a rotating writer compressing
 // the old files.
 func NewWriterWithCompression(filename string) (*RotatingWriter, error) {
 	w, err := NewWriter(filename)
