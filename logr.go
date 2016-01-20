@@ -177,6 +177,13 @@ func (w *RotatingWriter) rotate() error {
 			if err := w.compressFile(destName); err != nil {
 				return err
 			}
+
+			// no error to compress the data and to rename it
+			// to its last filename, we can now safely remove
+			// the original uncompressed file.
+			if err := os.Remove(destName); err != nil {
+				return err
+			}
 		}
 
 		w.startDate = time.Now().Truncate(time.Hour * 24)
@@ -195,7 +202,7 @@ func (w *RotatingWriter) rotate() error {
 	return nil
 }
 
-// compress rewrites the rotated file in a compressed file.
+// compressFile compresses the file at destName into a file at destName.gz
 func (w *RotatingWriter) compressFile(destName string) error {
 	var rotated, tmpFile *os.File
 	var err error
@@ -219,13 +226,6 @@ func (w *RotatingWriter) compressFile(destName string) error {
 
 	// rename the gzipped file
 	if err := os.Rename(tmpFile.Name(), destName+".gz"); err != nil {
-		return err
-	}
-
-	// no error to compress the data and to rename it
-	// to its last filename, we can now safely remove
-	// the original uncompressed file.
-	if err := os.Remove(destName); err != nil {
 		return err
 	}
 
